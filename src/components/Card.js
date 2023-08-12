@@ -6,6 +6,7 @@ function Card({card,onCardClick,onCardDeleteClick}) {
             <img
                 className="place-card__image"
                 src={card.link}
+                alt={card.name}
                 onClick={() => onCardClick({link: card.link, name: card.name})}
             />
             <button className="place-card__delete-btn"

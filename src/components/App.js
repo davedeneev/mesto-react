@@ -26,7 +26,7 @@ function App() {
                 setCurrentUser(userInfo);
                 setCards(initialCards);
             })
-            .catch((error) => console.log(`Ошибка: ${error}`));
+            .catch(console.error);
     }, []);
 
     function handleEditAvatarClick () {
@@ -58,7 +58,8 @@ function App() {
             isLiked: !isLiked
         }).then((newCard) => {
             setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
-        });
+        })
+            .catch(console.error);
     }
 
     function handleCardDelete(card) {
@@ -68,9 +69,7 @@ function App() {
             .then(() => {
                 setCards(state => state.filter(item => item._id !== card._id));
             })
-            .catch(err => {
-                console.log(err);
-            });
+            .catch(console.error);
     }
 
     function handleUpdateUser(user) {
@@ -79,7 +78,7 @@ function App() {
                 setCurrentUser(inputs);
                 closeAllPopups();
             })
-            .catch((err) => console.log(err));
+            .catch(console.error);
     }
 
     function handleUpdateAvatar(user) {
@@ -88,7 +87,7 @@ function App() {
                 setCurrentUser(inputs);
                 closeAllPopups();
             })
-            .catch((err) => console.log(err));
+            .catch(console.error);
     }
 
     function handleAddPlaceSubmit(data) {
@@ -97,7 +96,7 @@ function App() {
                 setCards([card, ...cards]);
                 closeAllPopups();
             })
-            .catch((err) => console.log(err));
+            .catch(console.error);
     }
 
     function closeAllPopups() {

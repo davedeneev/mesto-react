@@ -35,29 +35,21 @@ class Api {
         }).then(this._handleResponse);
     };
 
-    deleteCard(cardId) {
-        const link = `${this._baseUrl}/cards/${cardId}`;
+    deleteCard(data) {
+        const link = `${this._baseUrl}/cards/${data.id}`;
         return fetch(link, {
             headers: this._headers,
             method: "DELETE",
         }).then(this._handleResponse);
     };
 
-    addLike(cardId) {
-        const link = `${this._baseUrl}/cards/likes/${cardId}`;
+    changeLikeCardStatus(data) {
+        const link = `${this._baseUrl}/cards/likes/${data.id}`;
         return fetch(link, {
-            method: "PUT",
-            headers: this._headers,
+            method: data.isLiked ? 'PUT' : 'DELETE',
+            headers: this._headers
         }).then(this._handleResponse);
-    };
-
-    removeLike(cardId) {
-        const link = `${this._baseUrl}/cards/likes/${cardId}`;
-        return fetch(link, {
-            method: "DELETE",
-            headers: this._headers,
-        }).then(this._handleResponse);
-    };
+    }
 
     editUserProfile(user) {
         const link = `${this._baseUrl}/users/me`;

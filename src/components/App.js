@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Header from "./Header.js";
 import Main from "./Main.js";
 import Footer from "./Footer.js";
@@ -7,14 +7,27 @@ import EditProfilePopup from "./EditProfilePopup.js";
 import AddPlacePopup from "./AddPlacePopup.js";
 import ImagePopup from "./ImagePopup.js";
 import ConfirmationPopup from "./ConfirmationPopup";
+import api from "../utils/api";
+import { CurrentUserContext } from "../contexts/CurrentUserContext.js";
 
 function App() {
-    const [isEditAvatarPopupOpen,setIsEditAvatarPopupOpen] = React.useState(false);
-    const [isEditProfilePopupOpen,setIsEditProfilePopupOpen] = React.useState(false);
-    const [isAddPlacePopupOpen,setIsAddPlacePopupOpen] = React.useState(false);
-    const [isConfirmationPopupOpen,setIsConfirmationPopupOpen] = React.useState(false);
-    const [selectedCard, setSelectedCard]=React.useState({});
-    const [isImagePopup, setImagePopup]=React.useState(false);
+    const [isEditAvatarPopupOpen,setIsEditAvatarPopupOpen] = useState(false);
+    const [isEditProfilePopupOpen,setIsEditProfilePopupOpen] = useState(false);
+    const [isAddPlacePopupOpen,setIsAddPlacePopupOpen] = useState(false);
+    const [isConfirmationPopupOpen,setIsConfirmationPopupOpen] = useState(false);
+    const [selectedCard, setSelectedCard]= useState({});
+    const [isImagePopup, setImagePopup]= useState(false);
+    const [currentUser, setCurrentUser] = useState({});
+    const [cards, setCards] = useState([]);
+
+    useEffect(() => {
+        Promise.all([api.getUser(), api.getInitialCards()])
+            .then(([userInfo, initialCards]) => {
+                setCurrentUser(userInfo);
+                setCards(initialCards);
+            })
+            .catch((error) => console.log(`Ошибка: ${error}`));
+    }, []);
 
     function handleEditAvatarClick () {
         setIsEditAvatarPopupOpen(true);
@@ -37,6 +50,56 @@ function App() {
         setImagePopup(true);
     }
 
+    function handleCardLike(card) {
+        const isLiked = card.likes.some(i => i._id === currentUser._id);
+
+        api.changeLikeCardStatus({
+            id: card._id,
+            isLiked: !isLiked
+        }).then((newCard) => {
+            setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+        });
+    }
+
+    function handleCardDelete(card) {
+        api.deleteCard({
+            id: card._id
+        })
+            .then(() => {
+                setCards(state => state.filter(item => item._id !== card._id));
+            })
+            .catch(err => {
+                console.log(err);
+            });
+    }
+
+    function handleUpdateUser(user) {
+        api.editUserProfile(user)
+            .then((inputs) => {
+                setCurrentUser(inputs);
+                closeAllPopups();
+            })
+            .catch((err) => console.log(err));
+    }
+
+    function handleUpdateAvatar(user) {
+        api.editUserAvatar(user)
+            .then((inputs) => {
+                setCurrentUser(inputs);
+                closeAllPopups();
+            })
+            .catch((err) => console.log(err));
+    }
+
+    function handleAddPlaceSubmit(data) {
+        api.addCard(data)
+            .then((card) => {
+                setCards([card, ...cards]);
+                closeAllPopups();
+            })
+            .catch((err) => console.log(err));
+    }
+
     function closeAllPopups() {
         setIsEditAvatarPopupOpen(false);
         setIsEditProfilePopupOpen(false);
@@ -46,40 +109,48 @@ function App() {
     }
 
     return (
-        <div className="site">
-            <div className="page">
-                <Header/>
-                <Main
-                    onEditAvatar={handleEditAvatarClick}
-                    onEditProfile={handleEditProfileClick}
-                    onAddPlace={handleAddPlaceClick}
-                    onCardDeleteClick={handleConfirmationClick}
-                    onCardClick={handleCardClick}
-                />
-                <Footer/>
-                <EditProfilePopup
-                    isOpen={isEditProfilePopupOpen}
-                    onClose={closeAllPopups}
-                />
-                <EditAvatarPopup
-                    isOpen={isEditAvatarPopupOpen}
-                    onClose={closeAllPopups}
-                />
-                <AddPlacePopup
-                    isOpen={isAddPlacePopupOpen}
-                    onClose={closeAllPopups}
-                />
-                <ConfirmationPopup
-                    isOpen={isConfirmationPopupOpen}
-                    onClose={closeAllPopups}
-                />
-                <ImagePopup
-                    card={selectedCard}
-                    isOpen={isImagePopup}
-                    onClose={closeAllPopups}
-                />
+        <CurrentUserContext.Provider value={currentUser}>
+            <div className="site">
+                <div className="page">
+                    <Header/>
+                    <Main
+                        onEditAvatar={handleEditAvatarClick}
+                        onEditProfile={handleEditProfileClick}
+                        onAddPlace={handleAddPlaceClick}
+                        onCardDeleteClick={handleConfirmationClick}
+                        onCardClick={handleCardClick}
+                        cards={cards}
+                        onCardLike={handleCardLike}
+                        onCardDelete={handleCardDelete}
+                    />
+                    <Footer/>
+                    <EditProfilePopup
+                        isOpen={isEditProfilePopupOpen}
+                        onClose={closeAllPopups}
+                        onUpdateUser={handleUpdateUser}
+                    />
+                    <EditAvatarPopup
+                        isOpen={isEditAvatarPopupOpen}
+                        onClose={closeAllPopups}
+                        onUpdateAvatar={handleUpdateAvatar}
+                    />
+                    <AddPlacePopup
+                        isOpen={isAddPlacePopupOpen}
+                        onClose={closeAllPopups}
+                        onAddPlace={handleAddPlaceSubmit}
+                    />
+                    <ConfirmationPopup
+                        isOpen={isConfirmationPopupOpen}
+                        onClose={closeAllPopups}
+                    />
+                    <ImagePopup
+                        card={selectedCard}
+                        isOpen={isImagePopup}
+                        onClose={closeAllPopups}
+                    />
+                </div>
             </div>
-        </div>
+        </CurrentUserContext.Provider>
   );
 }
 
